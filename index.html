@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARA - AI Counselor for APU</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .api-key-setup {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+        }
+
+        .api-key-setup h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .api-key-setup input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ffc107;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .api-key-setup button {
+            background: #ffc107;
+            color: #856404;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .api-key-setup button:hover {
+            background: #ffb300;
+        }
+
+        .chat-container {
+            padding: 20px;
+            min-height: 400px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+        }
+
+        .message.assistant .message-content {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .input-container {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background: #f8f9fa;
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .input-wrapper input:focus {
+            border-color: #667eea;
+        }
+
+        .voice-btn, .send-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .voice-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .voice-btn:hover {
+            background: #218838;
+        }
+
+        .voice-btn.listening {
+            background: #dc3545;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .lead-capture {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            padding: 25px;
+            margin: 20px;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .lead-capture h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        .lead-capture-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .capture-option {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #4caf50;
+            text-align: center;
+        }
+
+        .capture-option h4 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .qr-placeholder {
+            width: 150px;
+            height: 150px;
+            background: #f0f0f0;
+            margin: 15px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .quick-form input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .quick-form button {
+            width: 100%;
+            padding: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .quick-form button:hover {
+            background: #45a049;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border-radius: 18px;
+            width: fit-content;
+        }
+
+        .typing-indicator span {
+            height: 10px;
+            width: 10px;
+            background: #999;
+            border-radius: 50%;
+            display: inline-block;
+            margin: 0 2px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .lead-capture-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 CARA</h1>
+            <p>Counselor for Admissions & Recruitment at APU</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">Speak or Type in Any Language</p>
+        </div>
+
+        <div id="apiKeySetup" class="api-key-setup">
+            <h3>🔑 Setup Required</h3>
+            <p style="margin-bottom: 15px;">Enter your Claude API key to start chatting:</p>
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
+            <button onclick="saveApiKey()">Save API Key</button>
+            <p style="margin-top: 10px; font-size: 12px; color: #856404;">
+                Get your API key from <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+            </p>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <div class="message assistant">
+                <div class="message-content">
+                    👋 Hi! I'm CARA, your AI counselor for APU admissions. Ask me anything about programs, requirements, fees, or student life at APU. You can speak or type in any language!
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+
+        <div id="leadCapture" class="lead-capture">
+            <h3>📱 Get Your Personalized Info Pack!</h3>
+            <p>Thanks for chatting with CARA! Choose how you'd like to receive detailed program information:</p>
+            
+            <div class="lead-capture-options">
+                <div class="capture-option">
+                    <h4>💬 WhatsApp</h4>
+                    <div class="qr-placeholder">
+                        [WhatsApp QR Code]
+                        <br>Generate at:<br>wa.me/60XXXXX
+                    </div>
+                    <p style="font-size: 14px;">Scan to connect instantly</p>
+                </div>
+
+                <div class="capture-option">
+                    <h4>微信 WeChat</h4>
+                    <div class="qr-placeholder">
+                        [WeChat QR Code]
+                        <br>Add your WeChat<br>QR code here
+                    </div>
+                    <p style="font-size: 14px;">扫码添加微信</p>
+                </div>
+
+                <div class="capture-option" style="grid-column: 1 / -1;">
+                    <h4>📧 Quick Form</h4>
+                    <div class="quick-form">
+                        <input type="text" id="leadName" placeholder="Your Name">
+                        <input type="text" id="leadContact" placeholder="WhatsApp or Email">
+                        <select id="leadProgram" style="width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="">Select Program Interest</option>
+                            <option value="Computing">Computing (CS, SE, AI, DA)</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Business">Business & Management</option>
+                            <option value="Design">Design & Media</option>
+                        </select>
+                        <button onclick="submitLead()">Send Me Info Pack</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()">🎤 Speak</button>
+                <input type="text" id="userInput" placeholder="Type your question..." onkeypress="handleKeyPress(event)">
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ANTHROPIC_API_KEY = localStorage.getItem('cara_api_key') || '';
+        let conversationHistory = [];
+        let messageCount = 0;
+        let isListening = false;
+        let recognition = null;
+
+        // Check for API key on load
+        window.onload = function() {
+            if (ANTHROPIC_API_KEY) {
+                document.getElementById('apiKeySetup').style.display = 'none';
+            }
+            
+            // Initialize speech recognition if available
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                
+                recognition.onresult = function(event) {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('userInput').value = transcript;
+                    stopListening();
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    stopListening();
+                };
+                
+                recognition.onend = function() {
+                    stopListening();
+                };
+            } else {
+                document.getElementById('voiceBtn').style.display = 'none';
+            }
+        };
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (key.startsWith('sk-ant-api03-')) {
+                ANTHROPIC_API_KEY = key;
+                localStorage.setItem('cara_api_key', key);
+                document.getElementById('apiKeySetup').style.display = 'none';
+                alert('API key saved successfully! You can now start chatting.');
+            } else {
+                alert('Invalid API key. Please check and try again.');
+            }
+        }
+
+        function toggleVoice() {
+            if (!recognition) {
+                alert('Speech recognition not supported in your browser');
+                return;
+            }
+            
+            if (isListening) {
+                stopListening();
+            } else {
+                startListening();
+            }
+        }
+
+        function startListening() {
+            recognition.start();
+            isListening = true;
+            const voiceBtn = document.getElementById('voiceBtn');
+            voiceBtn.classList.add('listening');
+            voiceBtn.textContent = '🔴 Listening...';
+        }
+
+        function stopListening() {
+            if (recognition && isListening) {
+                recognition.stop();
+            }
+            isListening = false;
+            const voiceBtn = document.getElementById('voiceBtn');
+            voiceBtn.classList.remove('listening');
+            voiceBtn.textContent = '🎤 Speak';
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value.trim();
+            if (!userInput) return;
+            
+            if (!ANTHROPIC_API_KEY) {
+                alert('Please enter your API key first');
+                return;
+            }
+
+            // Display user message
+            addMessage(userInput, 'user');
+            document.getElementById('userInput').value = '';
+            messageCount++;
+
+            // Show typing indicator
+            document.getElementById('typingIndicator').style.display = 'block';
+            scrollToBottom();
+
+            // Add to conversation history
+            conversationHistory.push({
+                role: 'user',
+                content: userInput
+            });
+
+            try {
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': ANTHROPIC_API_KEY,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-sonnet-4-20250514',
+                        max_tokens: 800,
+                        messages: conversationHistory,
+                        system: `You are CARA (Counselor for Admissions & Recruitment at APU), an AI counselor helping prospective students learn about Asia Pacific University of Technology & Innovation (APU) in Malaysia.
+
+Your role is to provide helpful, concise, and empathetic guidance about:
+- Programs offered (Computing, Engineering, Business, Design)
+- Entry requirements and SPM results
+- Fees and scholarships
+- Student life and facilities
+- Application process
+
+CRITICAL SPM REQUIREMENTS (MUST BE ACCURATE):
+- Bahasa Malaysia (BM) is COMPULSORY - must pass for SPM certificate
+- Sejarah (History) is COMPULSORY - must pass for SPM certificate
+- If student failed either BM or Sejarah: They must retake in July paper
+- Contact their secondary school to register for July retake and get exact dates
+- APU can offer CONDITIONAL acceptance - start Foundation while waiting for July results
+
+When student mentions failing BM or Sejarah, respond:
+"[Subject] is compulsory for your SPM certificate. You'll need to retake it in the July paper - contact your secondary school to register for the retake and get the exact dates.
+
+Good news: APU can offer you CONDITIONAL acceptance. You can:
+• Start Foundation program in June/July
+• Retake [subject] in July exam
+• Once you pass, your admission is confirmed
+
+This way you don't waste time waiting. Many students do this successfully. Have you registered for the July retake yet?"
+
+CONVERSATION STYLE:
+- Keep responses concise (2-4 short paragraphs maximum)
+- Be empathetic and validating ("I know waiting for results is stressful...")
+- Ask follow-up questions to understand their needs
+- Use natural, conversational language
+- Respond in the same language the student uses
+- Avoid long lists or excessive information dumps
+
+LEAD GENERATION:
+After 3+ meaningful exchanges, mention: "I can send you detailed program brochures, scholarship info, and application guides. Would you like me to share how to receive these?"
+
+Remember: You're a counselor, not just an information database. Build rapport, understand concerns, guide decisions.`
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const assistantMessage = data.content[0].text;
+
+                // Hide typing indicator
+                document.getElementById('typingIndicator').style.display = 'none';
+
+                // Display assistant message
+                addMessage(assistantMessage, 'assistant');
+                
+                // Add to conversation history
+                conversationHistory.push({
+                    role: 'assistant',
+                    content: assistantMessage
+                });
+
+                // Show lead capture after 3+ exchanges
+                if (messageCount >= 3) {
+                    setTimeout(() => {
+                        document.getElementById('leadCapture').style.display = 'block';
+                        scrollToBottom();
+                    }, 2000);
+                }
+
+            } catch (error) {
+                document.getElementById('typingIndicator').style.display = 'none';
+                addMessage('Sorry, I encountered an error. Please check your API key and try again. Error: ' + error.message, 'assistant');
+                console.error('Error:', error);
+            }
+        }
+
+        function addMessage(text, sender) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            
+            messageDiv.appendChild(contentDiv);
+            chatContainer.insertBefore(messageDiv, document.getElementById('typingIndicator'));
+            
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function submitLead() {
+            const name = document.getElementById('leadName').value.trim();
+            const contact = document.getElementById('leadContact').value.trim();
+            const program = document.getElementById('leadProgram').value;
+
+            if (!name || !contact) {
+                alert('Please enter your name and contact information');
+                return;
+            }
+
+            // In production, this would send to your backend/database
+            console.log('Lead captured:', { name, contact, program, conversationHistory });
+            
+            alert(`Thank you, ${name}! We'll send detailed information about ${program || 'APU programs'} to ${contact} shortly. Check your WhatsApp/email in the next few minutes!`);
+            
+            // Hide lead capture form
+            document.getElementById('leadCapture').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
